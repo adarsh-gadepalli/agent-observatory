@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Play, BookOpen, BarChart3, Settings, Database } from 'lucide-react';
+import { LayoutDashboard, Play, Settings, Database } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface LayoutProps {
@@ -14,8 +14,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: Database, label: 'Builder', path: '/builder' },
     { icon: Play, label: 'Simulation', path: '/simulation' },
-    { icon: BarChart3, label: 'Scenarios', path: '/scenarios' },
-    { icon: BookOpen, label: 'Learning', path: '/learning' },
   ];
 
   return (
