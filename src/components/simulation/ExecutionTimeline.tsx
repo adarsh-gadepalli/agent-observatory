@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, Clock, Loader2 } from 'lucide-react';
 
@@ -11,39 +11,22 @@ interface Step {
   cost?: string;
 }
 
-export const ExecutionTimeline = () => {
-  const [steps, setSteps] = useState<Step[]>([
-    { id: '1', type: 'reasoning', content: 'Analyzing user request: "Book a flight to NYC"', status: 'completed', duration: '1.2s', cost: '$0.002' },
-    { id: '2', type: 'memory', content: 'Retrieving user preferences...', status: 'running', duration: '0.5s' },
-    { id: '3', type: 'tool', content: 'Search Flights API', status: 'pending' },
-    { id: '4', type: 'reasoning', content: 'Synthesizing results', status: 'pending' },
-  ]);
+interface ExecutionTimelineProps {
+  steps: Step[];
+}
 
-  // Mock simulation
+export const ExecutionTimeline: React.FC<ExecutionTimelineProps> = ({ steps }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new steps arrive
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSteps(current => {
-        const runningIndex = current.findIndex(s => s.status === 'running');
-        if (runningIndex === -1) return current;
-
-        const next = [...current];
-        // Complete current
-        next[runningIndex] = { ...next[runningIndex], status: 'completed', duration: '0.8s' };
-        
-        // Start next if exists
-        if (runningIndex + 1 < next.length) {
-          next[runningIndex + 1] = { ...next[runningIndex + 1], status: 'running' };
-        }
-        
-        return next;
-      });
-    }, 2000);
-
-    return () => clearInterval(timer);
-  }, []);
+    if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [steps.length, steps[steps.length - 1]?.status]);
 
   return (
-    <div className="bg-slate-50 p-4 h-full overflow-y-auto">
+    <div className="bg-slate-50 p-4 h-full overflow-y-auto" ref={scrollRef}>
       <div className="space-y-6">
         {steps.map((step) => (
           <motion.div 
@@ -88,4 +71,3 @@ export const ExecutionTimeline = () => {
     </div>
   );
 };
-
