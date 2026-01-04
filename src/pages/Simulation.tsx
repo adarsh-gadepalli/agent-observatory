@@ -87,8 +87,8 @@ const Simulation: React.FC = () => {
              <h2 className="font-semibold text-slate-700">Architecture State</h2>
            </div>
            <div className="flex-1 relative">
-             <div className="absolute inset-0 pointer-events-none opacity-80">
-                 <FlowCanvas />
+             <div className="absolute inset-0 opacity-80">
+                 <FlowCanvas readonly={true} />
              </div>
            </div>
          </div>

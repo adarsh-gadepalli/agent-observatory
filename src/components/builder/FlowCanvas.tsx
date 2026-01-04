@@ -1,40 +1,31 @@
 import React, { useCallback, useRef, useState } from 'react';
 import ReactFlow, {
-  addEdge,
-  useNodesState,
-  useEdgesState,
   Controls,
   Background,
-  type Connection,
-  type Edge,
   ReactFlowProvider,
-  type Node,
   type ReactFlowInstance,
+  type Node,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'input',
-    data: { label: 'User Input' },
-    position: { x: 250, y: 5 },
-  },
-];
+import { useStore } from '../../lib/store';
+import { useShallow } from 'zustand/react/shallow';
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
-const FlowCanvasInner = () => {
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+const selector = (state: any) => ({
+  nodes: state.nodes,
+  edges: state.edges,
+  onNodesChange: state.onNodesChange,
+  onEdgesChange: state.onEdgesChange,
+  onConnect: state.onConnect,
+  addNode: state.addNode,
+});
 
-  const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  );
+const FlowCanvasInner = ({ readonly }: { readonly: boolean }) => {
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode } = useStore(useShallow(selector));
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -43,6 +34,8 @@ const FlowCanvasInner = () => {
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
+      if (readonly) return; // Prevent dropping in readonly mode
+
       event.preventDefault();
 
       const type = event.dataTransfer.getData('application/reactflow/type');
@@ -61,12 +54,12 @@ const FlowCanvasInner = () => {
         id: getId(),
         type: 'default', 
         position,
-        data: { label: `${label}` },
+        data: { label: `${label}`, type }, // Save the type metadata
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      addNode(newNode);
     },
-    [reactFlowInstance, setNodes],
+    [reactFlowInstance, addNode, readonly],
   );
 
   return (
@@ -74,26 +67,28 @@ const FlowCanvasInner = () => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onNodesChange={readonly ? undefined : onNodesChange}
+        onEdgesChange={readonly ? undefined : onEdgesChange}
+        onConnect={readonly ? undefined : onConnect}
         onInit={setReactFlowInstance}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        nodesDraggable={!readonly}
+        nodesConnectable={!readonly}
+        elementsSelectable={!readonly}
         fitView
       >
-        <Controls />
+        <Controls showInteractive={!readonly} />
         <Background />
       </ReactFlow>
     </div>
   );
 };
 
-export const FlowCanvas = () => {
+export const FlowCanvas = ({ readonly = false }: { readonly?: boolean }) => {
   return (
     <ReactFlowProvider>
-      <FlowCanvasInner />
+      <FlowCanvasInner readonly={readonly} />
     </ReactFlowProvider>
   );
 }
-
